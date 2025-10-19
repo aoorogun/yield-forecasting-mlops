@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: python -m unittest discover -s tests -v
+      - name: Smoke-test the complete pipeline
+        run: |
+          yield-forecast generate-data
+          yield-forecast train
+          yield-forecast evaluate
+          yield-forecast reforecast --scenario configs/scenario_example.json
+          yield-forecast monitor
+      - uses: actions/upload-artifact@v4
+        with:
+          name: model-evaluation
+          path: |
+            artifacts/metadata.json
+            artifacts/test_predictions.csv
+            reports/drift_report.json
+            reports/scenario_impact.csv
+

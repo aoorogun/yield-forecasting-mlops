@@ -1,0 +1,40 @@
+name: Build and deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options: [staging, prod]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-2
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Build immutable image
+        env:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          IMAGE_TAG="${GITHUB_SHA}"
+          docker build --tag "$ECR_REPOSITORY:$IMAGE_TAG" .
+          docker push "$ECR_REPOSITORY:$IMAGE_TAG"
+      - name: Register approved model deployment
+        run: >-
+          aws sagemaker create-model
+          --model-name "yield-forecast-${GITHUB_SHA::12}"
+          --primary-container "Image=${{ secrets.ECR_REPOSITORY }}:${GITHUB_SHA}"
+          --execution-role-arn "${{ secrets.SAGEMAKER_EXECUTION_ROLE_ARN }}"
+

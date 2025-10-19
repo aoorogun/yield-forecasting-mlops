@@ -1,0 +1,13 @@
+{
+  "scenario_id": "DEC-2025-014",
+  "name": "Pricing and digital-engagement programme",
+  "status": "proposed",
+  "effective_from": "2024-01-01",
+  "filters": {"segment": ["consumer", "commercial"]},
+  "changes": {
+    "fee_bps": {"operation": "add", "value": -4.0},
+    "digital_engagement": {"operation": "multiply", "value": 1.08},
+    "net_flows_mn": {"operation": "add", "value": 8.0}
+  }
+}
+

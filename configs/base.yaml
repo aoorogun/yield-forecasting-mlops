@@ -1,0 +1,49 @@
+project:
+  name: yield-forecasting
+  random_seed: 42
+  model_version: "1.0.0"
+
+paths:
+  raw_data: data/raw/portfolio_monthly.csv
+  artifact_dir: artifacts
+  report_dir: reports
+
+data:
+  start_date: "2019-01-01"
+  periods: 72
+  segments: [consumer, commercial, institutional]
+  products: [fixed_income, multi_asset]
+  missing_rate: 0.06
+
+split:
+  validation_periods: 12
+  test_periods: 12
+
+features:
+  categorical: [segment, product]
+  contemporaneous:
+    - base_rate
+    - inflation
+    - unemployment
+    - market_volatility
+    - assets_mn
+    - net_flows_mn
+    - fee_bps
+    - duration_years
+    - credit_spread_bps
+    - digital_engagement
+  lag_sources: [gross_yield, strategic_score, net_flows_mn, market_volatility]
+  lags: [1, 3, 6, 12]
+  rolling_windows: [3, 6, 12]
+  targets: [gross_yield, strategic_score]
+
+training:
+  selection_metric: mean_mae
+  prediction_interval_alpha: 0.1
+  candidates: [elastic_net, random_forest, hist_gradient_boosting]
+
+monitoring:
+  psi_warning: 0.10
+  psi_critical: 0.25
+  bins: 10
+
